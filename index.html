@@ -1,21 +1,80 @@
-fetch('https://api.seatgeek.com/2/events?taxonomies.name=sports&per_page=10&client_id=YOUR_CLIENT_ID')
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById('events');
-    data.events.forEach(event => {
-      const lowestPrice = event.stats.lowest_price;
-      const priceDisplay = lowestPrice 
-        ? `<a href="${event.url}" target="_blank" style="text-decoration:none; color:blue;">$${lowestPrice}</a>`
-        : 'Not available yet';
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sports Ticket Deals</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+    }
+    h1 { text-align: center; }
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    #events div {
+      border-bottom: 1px solid #ccc;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
 
-      container.innerHTML += `
-        <div style="margin-bottom:20px;">
-          <strong>${event.title}</strong><br>
-          ${event.venue.name}, ${event.venue.city}<br>
-          ${new Date(event.datetime_local).toLocaleString()}<br>
-          Lowest Price: ${priceDisplay}<br>
-          <a href="${event.url}" target="_blank">Buy Tickets</a>
-        </div>
-      `;
-    });
-  });
+  <h1>Find Cheap Sports Tickets</h1>
+  <div style="text-align:center;">
+    <input id="cityInput" type="text" placeholder="Enter city (e.g. Toronto, New York)">
+    <button onclick="searchEvents()">Search</button>
+  </div>
+
+  <div id="events" style="margin-top:30px;"></div>
+
+  <script>
+    const clientId = "YOUR_CLIENT_ID"; // replace with your SeatGeek client ID
+
+    function searchEvents() {
+      const city = document.getElementById('cityInput').value.trim();
+      if (!city) {
+        alert('Please enter a city.');
+        return;
+      }
+
+      const url = `https://api.seatgeek.com/2/events?venue.city=${encodeURIComponent(city)}&taxonomies.name=sports&per_page=20&client_id=${NTQzNjIzODB8MTc2MzA0NDc5Mi40MjQ0NDM3}`;
+      const eventsDiv = document.getElementById('events');
+      eventsDiv.innerHTML = `<p>Loading results for <strong>${city}</strong>...</p>`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          eventsDiv.innerHTML = ''; // clear old results
+          if (!data.events.length) {
+            eventsDiv.innerHTML = `<p>No upcoming sports events found for <strong>${city}</strong>.</p>`;
+            return;
+          }
+          data.events.forEach(event => {
+            const lowestPrice = event.stats.lowest_price;
+            const priceDisplay = lowestPrice
+              ? `<a href="${event.url}" target="_blank" style="text-decoration:none; color:blue;">$${lowestPrice}</a>`
+              : 'Not available yet';
+
+            eventsDiv.innerHTML += `
+              <div>
+                <strong>${event.title}</strong><br>
+                ${event.venue.name}, ${event.venue.city}<br>
+                ${new Date(event.datetime_local).toLocaleString()}<br>
+                Lowest Price: ${priceDisplay}<br>
+                <a href="${event.url}" target="_blank">Buy Tickets</a>
+              </div>
+            `;
+          });
+        })
+        .catch(err => {
+          eventsDiv.innerHTML = `<p>Error fetching events. Please try again later.</p>`;
+          console.error(err);
+        });
+    }
+  </script>
+
+</body>
+</html>
